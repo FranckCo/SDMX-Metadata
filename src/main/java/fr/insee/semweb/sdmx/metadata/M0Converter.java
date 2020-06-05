@@ -1,5 +1,23 @@
 package fr.insee.semweb.sdmx.metadata;
 
+import static fr.insee.semweb.sdmx.metadata.Configuration.FAMILY_THEMES_XLSX_FILE_NAME;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_BASE_GRAPH_URI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_CODES_BASE_URI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_CODE_LISTS_BASE_URI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_FILE_NAME;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_RELATED_TO;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_VALUES;
+import static fr.insee.semweb.sdmx.metadata.Configuration.M0_VALUES_EN;
+import static fr.insee.semweb.sdmx.metadata.Configuration.ddsToWeb4GIdMappings;
+import static fr.insee.semweb.sdmx.metadata.Configuration.inseeCodeURI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.inseeUnitURI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.m0ToWeb4GIdMappings;
+import static fr.insee.semweb.sdmx.metadata.Configuration.operationResourceURI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.organizationURI;
+import static fr.insee.semweb.sdmx.metadata.Configuration.propertyMappings;
+import static fr.insee.semweb.sdmx.metadata.Configuration.stringProperties;
+import static fr.insee.semweb.sdmx.metadata.Configuration.themeURI;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +57,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
-import static fr.insee.semweb.sdmx.metadata.Configuration.*;
 import fr.insee.semweb.utils.URIComparator;
 import fr.insee.stamina.utils.PROV;
 
@@ -128,7 +145,9 @@ public class M0Converter {
 					listOfCodes.add(code);
 				}
 			});
-			if (listOfCodes.size() > 0) codeMappings.put(index, listOfCodes);
+			if (listOfCodes.size() > 0) {
+                codeMappings.put(index, listOfCodes);
+            }
 		}
 		logger.debug(codeMappings.size() + " code lists found in the 'codelists' M0 model");
 		associationsM0Model.close();
@@ -137,12 +156,17 @@ public class M0Converter {
 		Model codeM0Model = m0Dataset.getNamedModel(M0_BASE_GRAPH_URI + "codes");
 		// Main loop is on code lists
 		for (int clIndex = 1; clIndex <= clNumber; clIndex++) {
-			if (codeMappings.get(clIndex) == null) continue; // Case of discontinuity in the numbering sequence
+			if (codeMappings.get(clIndex) == null)
+             {
+                continue; // Case of discontinuity in the numbering sequence
+            }
 			Resource clResource = clM0Model.createResource(M0_CODE_LISTS_BASE_URI + clIndex);
 			Resource skosCLResource = skosModel.createResource(M0_CODE_LISTS_BASE_URI + clIndex, SKOS.ConceptScheme);
 			logger.info("Creating code list " + skosCLResource.getURI() + " containing codes " + codeMappings.get(clIndex));
 			for (String property : clPropertyMappings.keySet()) { // Looping through M0 properties
-				if (clPropertyMappings.get(property) == null) continue;
+				if (clPropertyMappings.get(property) == null) {
+                    continue;
+                }
 				Resource propertyResource = clM0Model.createResource(clResource.getURI() + "/" + property);
 				StmtIterator valueIterator = clM0Model.listStatements(propertyResource, M0_VALUES, (RDFNode)null); // Find French values (there should be exactly one)
 				if (!valueIterator.hasNext()) {
@@ -155,7 +179,9 @@ public class M0Converter {
 				} else {
 					skosCLResource.addProperty(clPropertyMappings.get(property), skosModel.createLiteral(valueIterator.next().getObject().toString()));
 				}
-				if (valueIterator.hasNext()) logger.error("Several values for property " + property + " of code list " + clResource.getURI());
+				if (valueIterator.hasNext()) {
+                    logger.error("Several values for property " + property + " of code list " + clResource.getURI());
+                }
 				valueIterator = clM0Model.listStatements(propertyResource, M0_VALUES_EN, (RDFNode)null); // Find English values (can be zero or one)
 				if (valueIterator.hasNext()) {
 					skosCLResource.addProperty(clPropertyMappings.get(property), skosModel.createLiteral(valueIterator.next().getObject().toString(), "en"));
@@ -168,7 +194,9 @@ public class M0Converter {
 				Resource skosCodeResource = skosModel.createResource(M0_CODES_BASE_URI + codeIndex, SKOS.Concept);
 				// Create the statements associated to the code
 				for (String property : clPropertyMappings.keySet()) {
-					if (clPropertyMappings.get(property) == null) continue;
+					if (clPropertyMappings.get(property) == null) {
+                        continue;
+                    }
 					Resource propertyResource = codeM0Model.createResource(codeResource.getURI() + "/" + property);
 					StmtIterator valueIterator = codeM0Model.listStatements(propertyResource, M0_VALUES, (RDFNode)null); // Find French values (there should be exactly one)
 					if (!valueIterator.hasNext()) {
@@ -180,7 +208,9 @@ public class M0Converter {
 					} else {
 						skosCodeResource.addProperty(clPropertyMappings.get(property), skosModel.createLiteral(valueIterator.next().getObject().toString()));
 					}
-					if (valueIterator.hasNext()) logger.error("Several values for property " + property + " of code " + codeResource.getURI());
+					if (valueIterator.hasNext()) {
+                        logger.error("Several values for property " + property + " of code " + codeResource.getURI());
+                    }
 					valueIterator = codeM0Model.listStatements(propertyResource, M0_VALUES_EN, (RDFNode)null); // Find English values (can be zero or one)
 					if (valueIterator.hasNext()) {
 						skosCodeResource.addProperty(clPropertyMappings.get(property), skosModel.createLiteral(valueIterator.next().getObject().toString(), "en"));
@@ -234,7 +264,9 @@ public class M0Converter {
 			Resource propertyResource = m0Model.createResource(resourceURI + "/ID_CODE");
 			StmtIterator valueIterator = m0Model.listStatements(propertyResource, M0_VALUES, (RDFNode)null); // There should be exactly one value
 			String orgId = "";
-			if (valueIterator.hasNext()) orgId = valueIterator.next().getObject().toString().trim();
+			if (valueIterator.hasNext()) {
+                orgId = valueIterator.next().getObject().toString().trim();
+            }
 			if (orgId.length() == 0) {
 				logger.warn("No organization for index  " + orgIndex);
 				continue;
@@ -248,9 +280,14 @@ public class M0Converter {
 			orgResource.addProperty(RDFS.label, valueIterator.next().getObject().toString().trim());
 
 			// Check that organization is in the target scheme (for non Insee organizations)
-			if ((orgId.length() == 4) && (StringUtils.isNumeric(orgId.substring(1)))) continue; // Insee organizations identifiers are like XNNN
+			if ((orgId.length() == 4) && (StringUtils.isNumeric(orgId.substring(1))))
+             {
+                continue; // Insee organizations identifiers are like XNNN
+            }
 			// Look in the target model for an organization with identifier equal to orgId
-			if (!targetModel.contains(null, DCTerms.identifier, orgId)) logger.warn("Organization " + orgId + " not found in target model");
+			if (!targetModel.contains(null, DCTerms.identifier, orgId)) {
+                logger.warn("Organization " + orgId + " not found in target model");
+            }
 			
 		}
 		m0Model.close();
@@ -279,7 +316,9 @@ public class M0Converter {
 		// For operations, there are only a few cases where the Web4G identifier is fixed
 		if ("operation".equals(type)) {
 			logger.debug("Fixed mappings for operations are read from " + Configuration.M0_ID_TO_WEB4G_ID_FILE_NAME);
-			for (Integer m0Id : m0ToWeb4GIdMappings.keySet()) mappings.put(m0Id, operationResourceURI(m0ToWeb4GIdMappings.get(m0Id), type));
+			for (Integer m0Id : m0ToWeb4GIdMappings.keySet()) {
+                mappings.put(m0Id, operationResourceURI(m0ToWeb4GIdMappings.get(m0Id), type));
+            }
 			logger.debug("A total of  " + mappings.size() + " mappings for operations will be returned");
 			return mappings;
 		}
@@ -363,7 +402,9 @@ public class M0Converter {
 		// We have to do a complete pass on all types of objects because there is no separation of the ranges for identifiers of different types
 		for (String resourceType : types) {
 			Map<Integer, String> typeMappings = getIdURIFixedMappings(m0Dataset, resourceType);
-			if (typeMappings.size() != 0) logger.info("Number of fixed mappings for type " + resourceType + ": " + typeMappings.size() + ", a corresponding amount of available identifiers will be removed");
+			if (typeMappings.size() != 0) {
+                logger.info("Number of fixed mappings for type " + resourceType + ": " + typeMappings.size() + ", a corresponding amount of available identifiers will be removed");
+            }
 			for (int index : typeMappings.keySet()) {
 				// Add fixed mapping to the global list of all mappings
 				uriMappings.put("http://baseUri/" + resourceType + "s/" + resourceType + "/" + index, typeMappings.get(index));
@@ -381,19 +422,29 @@ public class M0Converter {
 			int maxNumber = M0Extractor.getMaxSequence(m0Model);
 			for (int index = 1; index <= maxNumber; index++) {
 				String m0URI = "http://baseUri/" + resourceType + "s/" + resourceType + "/" + index;
-				if (uriMappings.containsKey(m0URI)) continue; // Fixed mappings already dealt with
+				if (uriMappings.containsKey(m0URI))
+                 {
+                    continue; // Fixed mappings already dealt with
+                }
 				// The following instruction does not actually add the resource to the model, so the test on the next line will work as expected
 				Resource m0Resource = m0Model.createResource(m0URI);
-				if (!m0Model.contains(m0Resource, null)) continue; // Verify that M0 resource actually exist
+				if (!m0Model.contains(m0Resource, null))
+                 {
+                    continue; // Verify that M0 resource actually exist
+                }
 				// At this point, the resource exists and has not a fixed mapping: attribute target URI based on first available number, except for families who use the M0 index
-				if ("famille".equals(resourceType)) uriMappings.put(m0Resource.getURI(), operationResourceURI(Integer.toString(index), resourceType));
-				else {
+				if ("famille".equals(resourceType)) {
+                    uriMappings.put(m0Resource.getURI(), operationResourceURI(Integer.toString(index), resourceType));
+                }
+                else {
 					Integer targetId = availableNumbers.get(0);
 					availableNumbers.remove(0);
 					uriMappings.put(m0Resource.getURI(), operationResourceURI(targetId.toString(), resourceType));
 				}
 				idCounters.put(resourceType, idCounters.get(resourceType) + 1);
-				if (idRanges.get(resourceType) > 0) idRanges.put(resourceType, idRanges.get(resourceType) - 1);
+				if (idRanges.get(resourceType) > 0) {
+                    idRanges.put(resourceType, idRanges.get(resourceType) - 1);
+                }
 			}
 			m0Model.close();
 			logger.info("Number of new mappings created for type " + resourceType + ": " + idCounters.get(resourceType));
@@ -412,8 +463,12 @@ public class M0Converter {
 		List<String> mappedURIs = new ArrayList<String>();
 		for (String m0URI : uriMappings.keySet()) {
 			String mappedURI = uriMappings.get(m0URI);
-			if (mappedURIs.contains(mappedURI)) logger.error("Duplicate value in mappings: " + mappedURI); 
-			else mappedURIs.add(mappedURI);
+			if (mappedURIs.contains(mappedURI)) {
+                logger.error("Duplicate value in mappings: " + mappedURI);
+            }
+            else {
+                mappedURIs.add(mappedURI);
+            }
 		}
 
 		logger.info("Total number of URI mappings for operations, series, families and indicators: " + uriMappings.size());
@@ -430,7 +485,10 @@ public class M0Converter {
 
 		// Read the M0 model and create the URI mappings if necessary
 		readDataset();
-		if (allURIMappings == null) allURIMappings = createURIMappings(); // Not indispensable for families
+		if (allURIMappings == null)
+         {
+            allURIMappings = createURIMappings(); // Not indispensable for families
+        }
 		// Get the family-themes relations
 		Map<String, List<String>> familyThemesRelations = getFamilyThemesRelations();
 
@@ -452,7 +510,10 @@ public class M0Converter {
 		int familyRealNumber = 0;
 		for (int familyIndex = 1; familyIndex <= familyMaxNumber; familyIndex++) {
 			Resource m0Resource = m0Model.createResource("http://baseUri/familles/famille/" + familyIndex);
-			if (!m0Model.contains(m0Resource, null)) continue; // No actual family for the current index
+			if (!m0Model.contains(m0Resource, null))
+             {
+                continue; // No actual family for the current index
+            }
 			familyRealNumber++;
 			String targetURI = allURIMappings.get(m0Resource.getURI());
 			if (targetURI == null) { // Should really not happen
@@ -468,7 +529,10 @@ public class M0Converter {
 					targetResource.addProperty(DCTerms.subject, familyModel.createResource(themeURI));
 					logger.debug("Adding theme " + themeURI + " to family");
 				}
-			} else logger.warn("No statistical theme found for family " + targetURI);
+			}
+            else {
+                logger.warn("No statistical theme found for family " + targetURI);
+            }
 			
 		}
 		logger.info(familyRealNumber + " families extracted");
@@ -486,7 +550,9 @@ public class M0Converter {
 
 		// Read the M0 model and create the URI mappings if necessary
 		readDataset();
-		if (allURIMappings == null) allURIMappings = createURIMappings();
+		if (allURIMappings == null) {
+            allURIMappings = createURIMappings();
+        }
 
 		logger.debug("Extracting the information on series from dataset " + M0_FILE_NAME);
 		Model m0Model = m0Dataset.getNamedModel(M0_BASE_GRAPH_URI + "series");
@@ -507,7 +573,9 @@ public class M0Converter {
 		for (int seriesIndex = 1; seriesIndex <= seriesMaxNumber; seriesIndex++) {
 			// The following instruction does not actually add the resource to the model, so the test on the next line will work as expected
 			Resource m0Resource = m0Model.createResource("http://baseUri/series/serie/" + seriesIndex);
-			if (!m0Model.contains(m0Resource, null)) continue;
+			if (!m0Model.contains(m0Resource, null)) {
+                continue;
+            }
 			seriesRealNumber++;
 			String targetURI = allURIMappings.get(m0Resource.getURI());
 			if (targetURI == null) { // There is definitely a problem if the M0 URI is not in the mappings
@@ -533,7 +601,9 @@ public class M0Converter {
 
 		// Read the M0 model and create the URI mappings if necessary
 		readDataset();
-		if (allURIMappings == null) allURIMappings = createURIMappings();
+		if (allURIMappings == null) {
+            allURIMappings = createURIMappings();
+        }
 
 		logger.debug("Extracting the information on operations from dataset " + M0_FILE_NAME);
 		Model m0Model = m0Dataset.getNamedModel(M0_BASE_GRAPH_URI + "operations");
@@ -552,7 +622,10 @@ public class M0Converter {
 		int operationRealNumber = 0;
 		for (int operationIndex = 1; operationIndex <= operationMaxNumber; operationIndex++) {
 			Resource m0Resource = m0Model.createResource("http://baseUri/operations/operation/" + operationIndex);
-			if (!m0Model.contains(m0Resource, null)) continue; // Cases where the index is not attributed
+			if (!m0Model.contains(m0Resource, null))
+             {
+                continue; // Cases where the index is not attributed
+            }
 			operationRealNumber++;
 			String targetURI = allURIMappings.get(m0Resource.getURI());
 			if (targetURI == null) { // There is definitely a problem if the M0 URI is not in the mappings
@@ -566,9 +639,13 @@ public class M0Converter {
 			for (String propertyName : Arrays.asList("MILLESIME", "MILESSIME")) {
 				Resource propertyResource = m0Model.createResource(m0Resource.getURI() + "/" + propertyName);
 				StmtIterator valueIterator = m0Model.listStatements(propertyResource, M0_VALUES, (RDFNode)null);
-				if (!valueIterator.hasNext()) continue;
+				if (!valueIterator.hasNext()) {
+                    continue;
+                }
 				String year = valueIterator.next().getObject().asLiteral().toString().trim();
-				if (year.length() == 0) continue;
+				if (year.length() == 0) {
+                    continue;
+                }
 				if ((year.length() != 4) || (!StringUtils.isNumeric(year))) {
 					logger.error("Invalid year value for resource " + m0Resource.getURI() + ": " + year);
 				} else { // Assuming there is no M0 resource with both MILLESIME and MILESSIME attributes
@@ -591,7 +668,9 @@ public class M0Converter {
 
 		// Read the M0 model and create the URI mappings if necessary
 		readDataset();
-		if (allURIMappings == null) allURIMappings = createURIMappings();
+		if (allURIMappings == null) {
+            allURIMappings = createURIMappings();
+        }
 
 		logger.debug("Reading the M0 model on indicators from dataset " + M0_FILE_NAME);
 		Model m0IndicatorssModel = m0Dataset.getNamedModel(M0_BASE_GRAPH_URI + "indicateurs");
@@ -610,7 +689,10 @@ public class M0Converter {
 		int indicatorRealNumber = 0;
 		for (int indicatorIndex = 1; indicatorIndex <= indicatorMaxNumber; indicatorIndex++) {
 			Resource m0Resource = m0IndicatorssModel.createResource("http://baseUri/indicateurs/indicateur/" + indicatorIndex);
-			if (!m0IndicatorssModel.contains(m0Resource, null)) continue; // Cases where the index is not attributed
+			if (!m0IndicatorssModel.contains(m0Resource, null))
+             {
+                continue; // Cases where the index is not attributed
+            }
 			indicatorRealNumber++;
 			String targetURI = allURIMappings.get(m0Resource.getURI());
 			if (targetURI == null) { // There is definitely a problem if the M0 URI is not in the mappings
@@ -647,7 +729,9 @@ public class M0Converter {
 		// RELATED_TO relations (limited to indicators)
 		multipleRelations = M0Extractor.extractRelations(m0AssociationModel);
 		for (String startM0URI : multipleRelations.keySet()) {
-			if (!startM0URI.startsWith("http://baseUri/indicateurs")) continue;
+			if (!startM0URI.startsWith("http://baseUri/indicateurs")) {
+                continue;
+            }
 			Resource startResource = indicatorModel.createResource(allURIMappings.get(startM0URI));
 			for (String endM0URI : multipleRelations.get(startM0URI)) {
 				Resource endResource = indicatorModel.createResource(allURIMappings.get(endM0URI));
@@ -658,7 +742,9 @@ public class M0Converter {
 		// REPLACES relations (limited to indicators)
 		multipleRelations = M0Extractor.extractReplacements(m0AssociationModel);
 		for (String replacingM0URI : multipleRelations.keySet()) {
-			if (!replacingM0URI.startsWith("http://baseUri/indicateurs")) continue;
+			if (!replacingM0URI.startsWith("http://baseUri/indicateurs")) {
+                continue;
+            }
 			Resource replacingResource = indicatorModel.createResource(allURIMappings.get(replacingM0URI));
 			for (String replacedM0URI : multipleRelations.get(replacingM0URI)) {
 				Resource replacedResource = indicatorModel.createResource(allURIMappings.get(replacedM0URI));
@@ -688,7 +774,10 @@ public class M0Converter {
 				if (valueIterator.hasNext()) {
 					// Must go through lexical values to avoid double escaping
 					String propertyValue = valueIterator.next().getObject().asLiteral().getLexicalForm().trim();
-					if (propertyValue.length() == 0) continue; // Ignore empty values for text properties
+					if (propertyValue.length() == 0)
+                     {
+                        continue; // Ignore empty values for text properties
+                    }
 					// Remove this is ALT_LABEL should have a language tag
 					if ("ALT_LABEL".equals(property)) {
 						targetResource.addProperty(propertyMappings.get(property), ResourceFactory.createStringLiteral(propertyValue));
@@ -708,7 +797,9 @@ public class M0Converter {
 				// In the other properties, select the coded ones (SOURCE_CATEGORY and FREQ_COLL)
 				// TODO FREQ_DISS (at least for indicators)? But there is no property mapping for this attribute
 				StmtIterator valueIterator = m0Model.listStatements(propertyResource, M0_VALUES, (RDFNode)null);
-				if (!valueIterator.hasNext()) continue;
+				if (!valueIterator.hasNext()) {
+                    continue;
+                }
 				// Then process the SOURCE_CATEGORY and FREQ_COLL attributes, values are taken from code lists
 				if (("SOURCE_CATEGORY".equals(property)) || ("FREQ_COLL".equals(property))) {
 					String frenchLabel = ("SOURCE_CATEGORY".equals(property)) ? "Catégorie de source" : "Fréquence"; // TODO Find better method
@@ -750,7 +841,9 @@ public class M0Converter {
 		// RELATED_TO relations (excluding indicators)
 		Map<String, List<String>> multipleRelations = M0Extractor.extractRelations(m0AssociationModel);
 		for (String startM0URI : multipleRelations.keySet()) {
-			if (startM0URI.startsWith("http://baseUri/indicateurs")) continue;
+			if (startM0URI.startsWith("http://baseUri/indicateurs")) {
+                continue;
+            }
 			Resource startResource = operationModel.createResource(allURIMappings.get(startM0URI));
 			for (String endM0URI : multipleRelations.get(startM0URI)) {
 				Resource endResource = operationModel.createResource(allURIMappings.get(endM0URI));
@@ -761,7 +854,10 @@ public class M0Converter {
 		// REPLACES relations (excluding indicators)
 		multipleRelations = M0Extractor.extractReplacements(m0AssociationModel);
 		for (String replacingM0URI : multipleRelations.keySet()) {
-			if (replacingM0URI.startsWith("http://baseUri/indicateurs")) continue; // There is no cross-relation of replacement between operations and indicators
+			if (replacingM0URI.startsWith("http://baseUri/indicateurs"))
+             {
+                continue; // There is no cross-relation of replacement between operations and indicators
+            }
 			Resource replacingResource = operationModel.createResource(allURIMappings.get(replacingM0URI));
 			for (String replacedM0URI : multipleRelations.get(replacingM0URI)) {
 				Resource replacedResource = operationModel.createResource(allURIMappings.get(replacedM0URI));
@@ -804,7 +900,7 @@ public class M0Converter {
 			familyThemesWorkbook = WorkbookFactory.create(xlsxFile);
 		} catch (Exception e) {
 			logger.fatal("Error while opening Excel file - " + e.getMessage());
-			return null;
+			return relationMappings;
 		}
 
 		Iterator<Row> rows = familyThemesWorkbook.getSheetAt(0).rowIterator();
@@ -859,10 +955,16 @@ public class M0Converter {
 				// Read the value of the property
 				String orgId = statement.getObject().asLiteral().toString();
 				// HACK Organization 81 has a weird identifier
-				if (m0URI.endsWith("/81")) orgId = "Drees";
+				if (m0URI.endsWith("/81")) {
+                    orgId = "Drees";
+                }
 				String orgURI = null;
-				if ((orgId.length() == 4) && (StringUtils.isNumeric(orgId.substring(1)))) orgURI = inseeUnitURI("DG75-" + orgId);
-				else orgURI = organizationURI(orgId);
+				if ((orgId.length() == 4) && (StringUtils.isNumeric(orgId.substring(1)))) {
+                    orgURI = inseeUnitURI("DG75-" + orgId);
+                }
+                else {
+                    orgURI = organizationURI(orgId);
+                }
 				organizationURIMappings.put(m0URI, orgURI);
 			}
 		});
@@ -877,8 +979,12 @@ public class M0Converter {
 	 */
 	public static String convertM0OrganizationURI(String m0URI) {
 
-		if (organizationURIMappings == null) organizationURIMappings = readOrganizationURIMappings();
-		if (organizationURIMappings.containsKey(m0URI)) return organizationURIMappings.get(m0URI);
+		if (organizationURIMappings == null) {
+            organizationURIMappings = readOrganizationURIMappings();
+        }
+		if (organizationURIMappings.containsKey(m0URI)) {
+            return organizationURIMappings.get(m0URI);
+        }
 		return null;
 	}
 }
