@@ -57,6 +57,8 @@ public class Configuration {
 	public static String SIMS_CL_TURTLE_FILE_NAME = "src/main/resources/data/sims-cl.ttl";
 	/** Concepts and concept schemes for the categorization of the operations and products */
 	public static String THEMES_TURTLE_FILE_NAME = "src/main/resources/data/themes.ttl";
+	/** Geo features */
+        public static String GEOFEATURES_TURTLE_FILE_NAME = "src/main/resources/data/geofeatures.ttl";
 
 	// Constants for naming
 

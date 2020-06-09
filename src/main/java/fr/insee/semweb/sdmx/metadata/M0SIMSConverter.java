@@ -1,6 +1,7 @@
 package fr.insee.semweb.sdmx.metadata;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -73,9 +74,12 @@ public class M0SIMSConverter extends M0Converter {
 	protected static Model simsDocumentsAndLinksModel = null;
 	/** Attachments between documentations and their target (series, operation or indicator) */
 	protected static SortedMap<Integer, String> simsAttachments = null;
+	
+	private static Map<String, String> geoCorrespondences = null;
+
 
 	// Will be handy for parsing dates
-	final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	static final  DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 	/**
 	 * Converts a list (or all) of M0 'documentation' models to SIMS models.
@@ -85,7 +89,7 @@ public class M0SIMSConverter extends M0Converter {
 	 * @param withAttachments If <code>true</code>, the resulting model will include the triple attaching the SIMS to its target.
 	 * @return A Jena dataset containing the models corresponding to the identifiers received.
 	 */
-	public static Dataset convertToSIMS(List<Integer> m0Ids, boolean namedModels, boolean withAttachments) {
+	public static Dataset convertToSIMS(List<Integer> m0Ids, boolean namedModels, boolean withAttachments) throws IOException {
 
 		// We will need the documentation model, the SIMSFr scheme and the SIMSFr MSD
 		if (m0Dataset == null) m0Dataset = RDFDataMgr.loadDataset(Configuration.M0_FILE_NAME);
@@ -97,6 +101,9 @@ public class M0SIMSConverter extends M0Converter {
 		Model m0AssociationsModel = m0Dataset.getNamedModel(Configuration.M0_BASE_GRAPH_URI + "associations");
 		attributeReferences = M0SIMSConverter.getAllAttributeReferences(m0AssociationsModel);
 		simsDocumentsAndLinksModel = convertDocumentsToSIMS().add(convertLinksToSIMS());
+		
+		//We need the correspondences between M0 geoCodes and geoFeature uri
+		geoCorrespondences = GeoFeatureModelMaker.getM0CogCorrespondences();
 
 		// Finally, if attachments are requested, we need the correspondence between documentations and the documented resources
 		if (withAttachments) simsAttachments = getSIMSAttachments(m0AssociationsModel);
@@ -269,10 +276,15 @@ public class M0SIMSConverter extends M0Converter {
 					logger.error("Property range should not be equal to dqv:Metric");
 				}
 				else if (propertyRange.equals(Configuration.TERRITORY_MAP_RANGE)) {
-					// TODO Handle English labels for features
-					Resource feature = simsModel.createResource(Configuration.geoFeatureURI(m0Id, entry.getCode()), Configuration.TERRITORY_MAP_RANGE);
-					feature.addProperty(RDFS.label, simsModel.createLiteral(stringValue, "fr"));
-					targetResource.addProperty(metadataAttributeProperty, feature);
+				    //stringValue is M0 geoCode
+				    String geoFeatureUri = geoCorrespondences.get(stringValue); //TODO Configuration.SIMS_REFAREA
+				//	Resource feature = simsModel.createResource(Configuration.geoFeatureURI(m0Id, entry.getCode()), Configuration.TERRITORY_MAP_RANGE);
+				//	feature.addProperty(RDFS.label, simsModel.createLiteral(stringValue, "fr"));
+				    if (geoFeatureUri != null) {
+					targetResource.addProperty(Configuration.SIMS_REFAREA, geoFeatureUri );
+				    }else {
+				        logger.warn("Unfound geofeature for code  {}", stringValue);
+				    }
 				}
 				else if (propertyRange.equals(ORG.Organization)) {
 					String normalizedValue = StringUtils.normalizeSpace(objectValue.toString());
