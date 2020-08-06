@@ -352,12 +352,12 @@ public class Configuration {
 
 	/** URI of an organization */
 	public static String organizationURI(String organizationId) {
-		return INSEE_ORG_BASE_URI + Utils.slug(organizationId);
+		return INSEE_ORG_BASE_URI + Utils.slug(organizationId).replaceFirst("eeunitedn: ou=", "");
 	}
 
 	/** URI of an Insee organizational unit */
 	public static String inseeUnitURI(String timbre) {
-		return INSEE_ORG_BASE_URI + "insee/" + timbre.toLowerCase();
+		return INSEE_ORG_BASE_URI + "insee/" + timbre.toLowerCase().replaceFirst("eeunitedn: ou=", "");
 	}
 
 	/** Returns a concept name associated to a code list name of the type CL_XXX_YYY */
