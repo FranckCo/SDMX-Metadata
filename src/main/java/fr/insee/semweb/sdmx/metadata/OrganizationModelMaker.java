@@ -234,11 +234,11 @@ public class OrganizationModelMaker {
 
 		for (String unitIdentifier : units.keySet()) {
 			logger.debug("Creating resource for unit " + unitIdentifier);
-			Resource unitResource = inseeModel.createResource(Configuration.inseeUnitURI(unitIdentifier));
+			Resource unitResource = inseeModel.createResource(Configuration.inseeUnitURI(unitIdentifier.replaceFirst("ou: ", "")));
 			unitResource.addProperty(RDF.type, ORG.OrganizationalUnit);
 			unitResource.addProperty(RDF.type, ORG.Organization); // Materialize the subsumption in order to simplify requests
-			unitResource.addProperty(DCTerms.identifier, unitIdentifier);
-			unitResource.addProperty(SKOS.prefLabel, inseeModel.createLiteral(units.get(unitIdentifier).trim(), "fr"));
+			unitResource.addProperty(DCTerms.identifier, unitIdentifier.replaceFirst("ou: ", ""));
+			unitResource.addProperty(SKOS.prefLabel, inseeModel.createLiteral(units.get(unitIdentifier).replaceFirst("description: ", "").trim(), "fr"));
 			if (hierarchy.containsKey(unitIdentifier)) {
 				Resource parentResource = inseeModel.createResource(Configuration.inseeUnitURI(hierarchy.get(unitIdentifier)));
 				parentResource.addProperty(ORG.hasUnit, unitResource);
