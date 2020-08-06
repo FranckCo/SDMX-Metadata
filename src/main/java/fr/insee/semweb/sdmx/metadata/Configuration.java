@@ -269,7 +269,8 @@ public class Configuration {
 	 * @return The URI of the DCType:Text resource.
 	 */
 	public static String simsFrRichTextURI(String m0Id, SIMSFrEntry entry, String language) {
-		return QUALITY_BASE_URI + "attribut/" + m0Id + "/" + entry.getNotation() + "/text" + ("fr".equals(language) ? "e" : "");
+		return QUALITY_BASE_URI + "attribut/" + m0Id + "/" + entry.getNotation() + "/text";
+		//+ ("fr".equals(language) ? "e" : "");
 	}
 
 	/** Returns the URI of a geo:Feature resource corresponding to territorial attribute */

@@ -138,4 +138,4 @@ Families, series and operations are published in the http://rdf.insee.fr/graphes
 MetadataReport: http://id.insee.fr/qualite/rapport/{number}, where {number} is the M0 documentation number (e.g. 1503)
 ReportedAttribute: http://id.insee.fr/qualite/attribut/{number}/{code}, where {number} is the M0 documentation number (e.g. 1503) and code is the SIMS attribute code (e.g. S.13.3.2)
 
-DCTypes:Text: http://id.insee.fr/qualite/attribut/{number}/{code}/texte
+DCTypes:Text: http://id.insee.fr/qualite/attribut/{number}/{code}/text
