@@ -255,10 +255,12 @@ public class M0SIMSConverter extends M0Converter {
 				logger.debug("Target property is " + metadataAttributeProperty + " with range " + propertyRange);
 				if (propertyRange.equals(DCTypes.Text)) {
 					// We are in the case of a 'text + seeAlso...' object. Create DCTypes.text instances for French and possibly English texts
-					Resource frenchTextResource = simsModel.createResource(Configuration.simsFrRichTextURI(m0Id, entry, "fr"), DCTypes.Text);
-					if ((stringValue != null) && (stringValue.length() != 0)) frenchTextResource.addProperty(RDF.value, simsModel.createLiteral(stringValue, "fr"));
-					frenchTextResource.addProperty(DCTerms.language, Configuration.LANGUAGE_FR);
-					targetResource.addProperty(metadataAttributeProperty, frenchTextResource);
+					Resource textResource = simsModel.createResource(Configuration.simsFrRichTextURI(m0Id, entry, "fr"), DCTypes.Text);
+					if ((stringValue != null) && (stringValue.length() != 0)) {
+                                            textResource.addProperty(RDF.value, simsModel.createLiteral(stringValue, "fr"));
+					}
+					//frenchTextResource.addProperty(DCTerms.language, Configuration.LANGUAGE_FR);
+										
 					// We search for references to French documents or links attached to this attribute
 					SortedSet<String> thisAttributeReferences = (documentReferencesFr == null) ? null : documentReferencesFr.get(entry.getCode());
 					logger.debug("Attribute " + entry.getCode() + " has type 'rich text'");
@@ -267,32 +269,33 @@ public class M0SIMSConverter extends M0Converter {
 						for (String refURI : thisAttributeReferences) {
 							// Add the referenced link/document as additional material to the text resource
 							Resource refResource = simsModel.createResource(refURI);
-							frenchTextResource.addProperty(Configuration.ADDITIONAL_MATERIAL, refResource);
+							textResource.addProperty(Configuration.ADDITIONAL_MATERIAL, refResource);
 							// If requested, add all the properties of the link/document extracted from the document and links model
 							if (includeReferences) simsModel.add(simsDocumentsAndLinksModel.listStatements(refResource, null, (RDFNode) null));
 						}
 					}
 					// See if there is an English rich text value
-					Resource englishTextResource = null;
+					//Resource englishTextResource = null;
 					objectValues = m0Model.listObjectsOfProperty(m0EntryResource, Configuration.M0_VALUES_EN).toList();
 					if (objectValues.size() > 0) {
-						englishTextResource = simsModel.createResource(Configuration.simsFrRichTextURI(m0Id, entry, "en"), DCTypes.Text);
+					   // frenchTextResource = simsModel.createResource(Configuration.simsFrRichTextURI(m0Id, entry, "en"), DCTypes.Text);
 						stringValue = objectValues.get(0).asLiteral().getString().trim().replaceAll("^\n", "");
-						englishTextResource.addProperty(RDF.value, simsModel.createLiteral(stringValue, "en"));
-						englishTextResource.addProperty(DCTerms.language, Configuration.LANGUAGE_EN);
-						targetResource.addProperty(metadataAttributeProperty, englishTextResource);
+						textResource.addProperty(RDF.value, simsModel.createLiteral(stringValue, "en"));
+						//englishTextResource.addProperty(DCTerms.language, Configuration.LANGUAGE_EN);
+						//targetResource.addProperty(metadataAttributeProperty, englishTextResource);
 						thisAttributeReferences = (documentReferencesEn == null) ? null : documentReferencesEn.get(entry.getCode());
 						if (thisAttributeReferences != null) {
 							logger.debug("Attribute " + entry.getCode() + " has English references " + thisAttributeReferences);
 							for (String refURI : thisAttributeReferences) {
 								// Add the referenced link/document as additional material to the text resource
 								Resource refResource = simsModel.createResource(refURI);
-								englishTextResource.addProperty(Configuration.ADDITIONAL_MATERIAL, refResource);
+								textResource.addProperty(Configuration.ADDITIONAL_MATERIAL, refResource);
 								// If requested, add all the properties of the link/document extracted from the document and links model
 								if (includeReferences) simsModel.add(simsDocumentsAndLinksModel.listStatements(refResource, null, (RDFNode) null));
 							}
 						}
 					}
+					targetResource.addProperty(metadataAttributeProperty, textResource);
 				}
 				else if (propertyRange.equals(Configuration.SIMS_REPORTED_ATTRIBUTE)) {
 					// Just a placeholder for now, the case does not seem to exist in currently available data
