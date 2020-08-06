@@ -353,8 +353,8 @@ public class M0SIMSConverter extends M0Converter {
 							SortedSet<String> orgURIs = orgAttributeValues.get(entry.getCode());
 							if (orgURIs.size() > 1) logger.warn("Multiple values for organizational attribute " + entry.getCode() + ", only the first value will be considered: " + orgURIs);
 							String orgURI = orgURIs.first();
-							Resource objectOrganization = simsModel.createResource(orgURI, ORG.Organization);
-							targetResource.addProperty(metadataAttributeProperty, objectOrganization);
+							//Resource objectOrganization = simsModel.createResource(orgURI, ORG.Organization); the Organization is not in sims graph
+							targetResource.addProperty(metadataAttributeProperty, orgURI);
 							logger.debug("Organization URI " + orgURI + " assigned to organizational attribute property");
 						}
 					}
