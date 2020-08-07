@@ -447,7 +447,7 @@ public class Configuration {
 		/** Returns the OWL property associated to the organization role */
 		public Property getProperty() {
 			switch(this) {
-				case PRODUCER: return DCTerms.creator;
+				case PRODUCER: return DCTerms.publisher;
 				case STAKEHOLDER: return DCTerms.contributor;
 				default: return null;
 			}
