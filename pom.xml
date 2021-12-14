@@ -7,7 +7,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<packaging>jar</packaging>
 	<name>Operations on SDMX metadata and related models such as SIMS</name>
 	<properties>
-		<log4j.version>2.13.3</log4j.version>
+		<log4j.version>2.16.0</log4j.version>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
